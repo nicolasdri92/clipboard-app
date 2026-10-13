@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Clipboard
+Comment=Textos e imágenes para copiar con un clic
+Exec=clipboard-app --hidden
+Icon=clipboard-app
+StartupWMClass=clipboard-app
+Terminal=false
+X-GNOME-Autostart-enabled=true
