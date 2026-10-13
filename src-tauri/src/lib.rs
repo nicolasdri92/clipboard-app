@@ -195,7 +195,7 @@ fn actualizar_menu(
     recientes: Vec<Entrada>,
 ) -> Result<(), String> {
     let menu = armar_menu(&app, &favoritos, &recientes).map_err(|e| e.to_string())?;
-    if let Some(t) = app.tray_by_id("principal") {
+    if let Some(t) = app.tray_by_id("clipboard") {
         t.set_menu(Some(menu)).map_err(|e| e.to_string())?;
     }
     let mut m = estado.0.lock().unwrap();
@@ -233,7 +233,7 @@ fn al_elegir(app: &AppHandle, id: &str) {
 /// aunque se cierre la ventana.
 fn crear_bandeja(app: &tauri::App) -> tauri::Result<()> {
     let menu = armar_menu(app.handle(), &[], &[])?;
-    let mut bandeja = TrayIconBuilder::with_id("principal")
+    let mut bandeja = TrayIconBuilder::with_id("clipboard")
         .tooltip("Clipboard")
         .menu(&menu)
         .on_menu_event(|app, e| al_elegir(app, e.id().as_ref()))
