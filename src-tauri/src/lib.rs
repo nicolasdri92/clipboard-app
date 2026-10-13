@@ -139,6 +139,25 @@ pub struct Entrada {
     activo: bool,
 }
 
+/// Imágenes que otra app (Screenshot) pidió guardar con `--importar <archivo>`.
+#[derive(Default)]
+struct Pendientes(Mutex<Vec<String>>);
+
+/// Si los argumentos traen `--importar <archivo>`, lo deja pendiente y avisa al frontend.
+fn importar_de_args(app: &AppHandle, args: &[String]) -> bool {
+    let Some(i) = args.iter().position(|a| a == "--importar") else { return false };
+    let Some(path) = args.get(i + 1) else { return false };
+    app.state::<Pendientes>().0.lock().unwrap().push(path.clone());
+    let _ = app.emit("importar", ());
+    true
+}
+
+/// El frontend toma las imágenes pendientes de importar.
+#[tauri::command]
+fn tomar_pendientes(estado: State<'_, Pendientes>) -> Vec<String> {
+    std::mem::take(&mut *estado.0.lock().unwrap())
+}
+
 /// Lo que se copia al elegir cada elemento del menú.
 #[derive(Default)]
 struct MenuRapido(Mutex<HashMap<String, Entrada>>);
@@ -233,13 +252,21 @@ fn crear_bandeja(app: &tauri::App) -> tauri::Result<()> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
-        // Una sola instancia: abrirla de nuevo trae al frente la que ya está.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| mostrar_ventana(app)))
+        // Una sola instancia: abrirla de nuevo trae al frente la que ya está, salvo que traiga
+        // una imagen para importar (Screenshot), que se guarda sin abrir la ventana.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if !importar_de_args(app, &args) {
+                mostrar_ventana(app);
+            }
+        }))
         .manage(MenuRapido::default())
+        .manage(Pendientes::default())
         .setup(|app| {
             crear_bandeja(app)?;
-            // Con --hidden (inicio automático) arranca solo en la barra superior.
-            if !std::env::args().any(|a| a == "--hidden") {
+            let args: Vec<String> = std::env::args().collect();
+            let importa = importar_de_args(app.handle(), &args);
+            // Con --hidden (inicio automático) o al importar, arranca solo en la barra superior.
+            if !importa && !args.iter().any(|a| a == "--hidden") {
                 mostrar_ventana(app.handle());
             }
             Ok(())
@@ -255,6 +282,7 @@ pub fn run() {
             load_data,
             save_data,
             actualizar_menu,
+            tomar_pendientes,
             portapapeles::leer_portapapeles,
             portapapeles::guardar_pendiente,
             portapapeles::importar_imagen,

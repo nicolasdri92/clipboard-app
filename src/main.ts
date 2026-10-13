@@ -1,7 +1,7 @@
 import "@fontsource-variable/geist";
 import "./styles.css";
 import {
-  actualizarMenu, type Entrada, copiarImagen, copiarTexto, guardarPendiente, importarImagen, isTauri, leerPortapapeles,
+  actualizarMenu, type Entrada, copiarImagen, tomarPendientes, copiarTexto, guardarPendiente, importarImagen, isTauri, leerPortapapeles,
   load, prepararRutas, save as persist, urlArchivo,
 } from "./store";
 import { esc, fmtSize, haceCuanto, norm, parseTags, primeraLinea, type Item, type Lectura, type Tema } from "./util";
@@ -329,6 +329,35 @@ async function agregarImagenes(paths: string[]) {
   }
 }
 
+/** Capturas que copió Screenshot: se guardan y quedan marcadas como lo que está en el portapapeles. */
+async function importarPendientes() {
+  let paths: string[];
+  try {
+    paths = await tomarPendientes();
+  } catch (e) {
+    return console.error(e);
+  }
+  for (const path of paths) {
+    const id = newId();
+    try {
+      const image = await importarImagen(path, id);
+      const existente = S.items.find((i) => i.image?.hash === image.hash);
+      if (existente) {
+        S.activo = existente.id;
+        S.items = S.items.map((x) => (x.id === existente.id ? { ...x, used: ahora() } : x));
+        commit();
+        renderList();
+      } else {
+        S.activo = id;
+        agregar([{ id, kind: "image", title: "Captura de pantalla", text: "", image, tags: [],
+          pinned: false, created: ahora(), used: null, uses: 0 }]);
+      }
+    } catch (e) {
+      console.error("No se pudo importar la captura", e);
+    }
+  }
+}
+
 // ---------- Panel ----------
 function openEdit(id: string) {
   const i = S.items.find((x) => x.id === id);
@@ -520,6 +549,8 @@ if (isTauri) {
       if (foco) guardarCopiado();
     });
   });
+  // Capturas que manda Screenshot.
+  import("@tauri-apps/api/event").then(({ listen }) => listen("importar", () => importarPendientes()));
   // Copiado desde el menú de la barra superior: se registra el uso.
   import("@tauri-apps/api/event").then(({ listen }) =>
     listen<string>("copiado-menu", ({ payload: id }) => {
@@ -578,6 +609,7 @@ async function init() {
   renderSearch();
   renderList();
   sincronizarMenu();
+  if (isTauri) await importarPendientes();
   if (document.hasFocus()) guardarCopiado();
 }
 

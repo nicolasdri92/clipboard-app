@@ -1,6 +1,6 @@
 [package]
 name = "clipboard-app"
-version = "1.0.0"
+version = "1.1.0"
 description = "Colección de textos e imágenes para copiar con un clic"
 edition = "2021"
 

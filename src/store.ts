@@ -49,6 +49,9 @@ export type Entrada = { id: string; label: string; kind: "text" | "image"; text:
 export const actualizarMenu = (favoritos: Entrada[], recientes: Entrada[]) =>
   invoke<void>("actualizar_menu", { favoritos, recientes });
 
+/** Imágenes que Screenshot pidió guardar (`clipboard-app --importar <archivo>`). */
+export const tomarPendientes = () => invoke<string[]>("tomar_pendientes");
+
 export const guardarPendiente = (id: string) => invoke<void>("guardar_pendiente", { id });
 export const importarImagen = (path: string, id: string) => invoke<Imagen>("importar_imagen", { path, id });
 export const copiarImagen = (id: string) => invoke<void>("copiar_imagen", { id });

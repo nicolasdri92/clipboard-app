@@ -11,6 +11,8 @@ imágenes— para volver a copiarlo con un clic. Mismo estilo que [Notes](https:
 - Favoritos, etiquetas, filtros (Todo / Textos / Imágenes / Favoritos) y búsqueda.
 - Imágenes: también se pueden agregar arrastrando archivos a la ventana.
 - **Menú en la barra superior** con favoritos y recientes para copiar sin abrir la ventana.
+- Recibe las capturas que se copian desde [Screenshot](https://github.com/nicolasdri92/screenshot-app)
+  (`clipboard-app --importar <archivo>`), sin abrir la ventana.
 - Límites: 1000 textos y 50 imágenes (los favoritos no cuentan y nunca se borran).
 - Corre en segundo plano, arranca con la sesión y abre una sola instancia.
 
